@@ -7,8 +7,8 @@ from .database import Base
 #     __tablename__ = "user_book"
 
 #     id = Column(Integer, primary_key=True, index=True)
-#     user_id = Column(Integer, ForeignKey("users.id"))
-#     book_id = Column(Integer, ForeignKey("books.id"))
+#     user_id = Column(Integer, ForeignKey("users.id"), index=True)
+#     book_id = Column(Integer, ForeignKey("books.id"), index=True)
 
 user_book = Table(
     "user_book",
@@ -48,6 +48,7 @@ class Record(Base):
     note = Column(String, default=None)
     category_id = Column(Integer, ForeignKey("categories.id"), index=True)
     book_id = Column(Integer, ForeignKey("books.id"), index=True)
+    type_ = Column(Integer, default=1)
     add_by = Column(Integer, ForeignKey("users.id"), index=True)
     add_at = Column(DATETIME, index=True)
 

@@ -1,8 +1,9 @@
+import logging
 from datetime import timedelta
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from starlette import status
@@ -15,6 +16,7 @@ from .database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+security = HTTPBasic()
 
 
 # Dependency
@@ -31,8 +33,13 @@ async def startup_event():
     try:
         crud.add_predefined_users(db)
         crud.add_predefined_categories(db)
+        crud.add_predefined_book(db)
+        crud.add_predefined_user_book(db)
+        crud.add_records_for_test(db)
     except IntegrityError:
         pass
+    except Exception as e:
+        logging.exception(e)
     finally:
         db.close()
 
@@ -110,7 +117,7 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return db_users
 
 
-@app.get("/users/me/", response_model=schemas.User, tags=["users"])
+@app.get("/users/me", response_model=schemas.User, tags=["users"])
 async def read_users_me(current_user: Annotated[schemas.User, Depends(get_current_user)]):
     return current_user
 
@@ -128,6 +135,7 @@ def update_user(user_id, user: schemas.UserCreate, db: Session = Depends(get_db)
     return crud.update_user(db, user_id, user)
 
 
+# categories
 @app.get("/categories", response_model=list[schemas.Category], tags=["categories"])
 def read_categories(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     db_categories = crud.get_categories(db, skip=skip, limit=limit)
@@ -142,7 +150,6 @@ def read_category(category_id: int, db: Session = Depends(get_db)):
     return db_category
 
 
-# categories
 @app.post("/categories", response_model=schemas.Category, tags=["categories"])
 def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
     db_category = crud.create_category(db=db, category=category)
@@ -159,3 +166,34 @@ def update_category(category_id, category: schemas.CategoryCreate, db: Session =
 @app.delete("/categories/{category_id}", tags=["categories"])
 def delete_category(category_id, db: Session = Depends(get_db)):
     return crud.delete_category(db=db, category_id=category_id)
+
+
+# books
+@app.post("/books", response_model=schemas.Book, tags=["books"])
+def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
+    db_book = crud.create_book(db=db, book=book)
+    return db_book
+
+
+@app.get("/books", response_model=list[schemas.Book], tags=["books"])
+def read_books(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    db_books = crud.get_books(db, skip=skip, limit=limit)
+    return db_books
+
+
+@app.get("/books/{book_id}", response_model=schemas.Book, tags=["books"])
+def read_book(book_id: int, db: Session = Depends(get_db)):
+    db_book = crud.get_book(db, book_id=book_id)
+    if db_book is None:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return db_book
+
+
+@app.put("/books/{book_id}", response_model=schemas.Book, tags=["books"])
+def update_book(book_id: int, book: schemas.BookCreate, db: Session = Depends(get_db)):
+    return crud.update_book(db, book_id, book)
+
+
+@app.delete("/books/{book_id}", tags=["books"])
+def delete_book(book_id: int, db: Session = Depends(get_db)):
+    return crud.delete_book(db, book_id)

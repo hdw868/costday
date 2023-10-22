@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
@@ -88,7 +89,7 @@ def get_records(db: Session, book_id: int, skip: int = 0, limit: int = 100):
 
 
 def create_user_record(db: Session, record: schemas.RecordCreate, user_id: int):
-    db_record = models.Record(**record.dict(), add_by=user_id)
+    db_record = models.Record(**record.dict(), add_by=user_id, add_at=datetime.now())
     db.add(db_record)
     db.commit()
     db.refresh(db_record)
@@ -172,6 +173,14 @@ def delete_book(db: Session, book_id: int):
         db.commit()
 
 
+def create_user_book(db: Session, user_book: schemas.UserBookCreate):
+    db.execute(
+        models.user_book.insert().values(user_id=user_book.user_id, book_id=user_book.book_id)
+    )
+    db.commit()
+    return user_book
+
+
 def add_predefined_categories(db: Session):
     predefined_categories = [
         {"cn_name": "购物", "en_name": "Shop", "icon": 1},
@@ -211,6 +220,16 @@ def add_predefined_book(db: Session):
     for book_data in predefined_books:
         book_create = schemas.BookCreate(**book_data)
         create_book(db=db, book=book_create)
+
+
+def add_predefined_user_book(db: Session):
+    predefined_user_books = [
+        {"user_id": 1, "book_id": 1},
+        {"user_id": 2, "book_id": 1},
+    ]
+    for user_book_data in predefined_user_books:
+        user_book_create = schemas.UserBookCreate(**user_book_data)
+        create_user_book(db=db, user_book=user_book_create)
 
 
 def add_records_for_test(db: Session):

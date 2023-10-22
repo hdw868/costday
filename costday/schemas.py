@@ -91,3 +91,20 @@ class Book(BookBase):
 
     class Config:
         orm_mode = True
+
+
+# 账本用户
+class UserBookBase(BaseModel):
+    user_id: int
+    book_id: int
+
+
+class UserBookCreate(UserBookBase):
+    pass
+
+
+class UserBook(UserBookBase):
+    id: int
+
+    class Config:
+        orm_mode = True
