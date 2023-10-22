@@ -197,3 +197,8 @@ def update_book(book_id: int, book: schemas.BookCreate, db: Session = Depends(ge
 @app.delete("/books/{book_id}", tags=["books"])
 def delete_book(book_id: int, db: Session = Depends(get_db)):
     return crud.delete_book(db, book_id)
+
+
+@app.post("/books/{book_id}/members", tags=["books"])
+def add_book_member(book_id: int, user_id: int, db: Session = Depends(get_db)):
+    return crud.add_book_member(db, book_id, user_id)
